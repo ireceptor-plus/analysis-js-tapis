@@ -1,0 +1,41 @@
+{
+  "name": "analysis-js-tapis",
+  "version": "1.0.0",
+  "description": "iReceptor Plus Analysis API for Tapis backend",
+  "author": [
+    {
+      "name": "iReceptor Plus",
+      "email": "info@ireceptor-plus.com"
+    }
+  ],
+  "website": {
+    "url": "ireceptor-plus.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ireceptor-plus/analysis-js-tapis"
+  },
+  "private": true,
+  "dependencies": {
+    "body-parser": "1.10.2",
+    "errorhandler": "1.3.2",
+    "express": "4.11.1",
+    "express-openapi": "^6.0.0",
+    "form-data": "2.3.2",
+    "json-approver": "1.0.3",
+    "kue": "0.10.5",
+    "moment": "2.10.6",
+    "moment-timezone": "0.4.1",
+    "q": "1.1.2",
+    "request": "2.51.0",
+    "underscore": "1.7.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "make test"
+  },
+  "engines": {
+    "node": ">=0.10.13",
+    "npm": "1.3.x"
+  }
+}

@@ -1,0 +1,93 @@
+openapi: '3.0'
+info:
+  title: iReceptorPlus Analysis API
+  version: 1.0.0
+  contact:
+    name: iReceptor Plus
+    url: 'https://www.ireceptor-plus.com'
+    email: info@ireceptor-plus.com
+  description: >
+    Analysis API for the iReceptor Plus platform.
+
+servers:
+  - url: https://vdjserver.org/irplus/v1/analysis
+    description: Production server
+    variables:
+      basePath:
+        default: /irplus/v1/analysis
+  - url: https://vdj-staging.tacc.utexas.edu/irplus/v1/analysis
+    description: Staging server
+    variables:
+      basePath:
+        default: /irplus/v1/analysis
+
+paths:
+  /:
+    get:
+      description: Service heartbeat.
+      operationId: get_service_status
+      responses:
+        '200':
+          description: Service is up.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+
+  /status/{analysis_id}:
+    get:
+      description: Return status of analysis for given identifier
+      operationId: get_analysis_status
+      responses:
+        '200':
+          description: Analysis status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+      parameters:
+        - name: analysis_id
+          in: path
+          description: analysis identifer
+          required: true
+          schema:
+            type: string
+
+  /rearrangement/define_clones:
+    post:
+      description: Create a define clones analysis for a rearrangement query.
+      operationId: define_clones
+      tags:
+        - rearrangements
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                token: 
+                  type: string
+                password: 
+                  type: string
+              required:
+                - token
+                - password
+      responses:
+        '200':
+          description: A successful call returns an analysis id.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  analysis_id:
+                    type: string
+        '401':
+          description: Not authorized.
+          content: 
+            'application/json': {}
