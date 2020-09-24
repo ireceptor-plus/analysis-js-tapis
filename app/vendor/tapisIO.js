@@ -265,18 +265,18 @@ tapisIO.sendCheckRequest = function(requestSettings, postData) {
             }
 
             if (responseObject && responseObject.status && responseObject.status.toLowerCase() === 'success') {
-		deferred.resolve(responseObject);
+                deferred.resolve(responseObject);
             } else {
-		if (responseObject.status.toLowerCase() === 'error' && response.statusCode == 404) {
-		    deferred.resolve(responseObject);
-		} else {
+                if (responseObject.status.toLowerCase() === 'error' && response.statusCode == 404) {
+                    deferred.resolve(responseObject);
+                } else {
                     if (tapisSettings.debugConsole === true) {
-			console.error('IRPLUS-API ERROR: Tapis returned an error. it is: ' + JSON.stringify(responseObject));
-			console.error('IRPLUS-API ERROR: Tapis returned an error. it is: ' + responseObject);
+                        console.error('IRPLUS-API ERROR: Tapis returned an error. it is: ' + JSON.stringify(responseObject));
+                        console.error('IRPLUS-API ERROR: Tapis returned an error. it is: ' + responseObject);
                     }
                     deferred.reject(new Error('Tapis response returned an error: ' + JSON.stringify(responseObject)));
-		}
-	    }	    
+                }
+            }       
         });
     });
 
@@ -365,22 +365,22 @@ tapisIO.launchJob = function(jobDataString) {
     var deferred = Q.defer();
 
     ServiceAccount.getToken()
-	.then(function(token) {
-	    var requestSettings = {
-		host:     tapisSettings.hostname,
-		method:   'POST',
-		path:     '/jobs/v2/'
+        .then(function(token) {
+            var requestSettings = {
+                host:     tapisSettings.hostname,
+                method:   'POST',
+                path:     '/jobs/v2/'
                 ,
-		rejectUnauthorized: false,
-		headers: {
-		    'Content-Length': Buffer.byteLength(jobDataString),
-		    'Content-Type': 'application/json',
-		    'Authorization': 'Bearer ' + ServiceAccount.accessToken()
-		},
-	    };
+                rejectUnauthorized: false,
+                headers: {
+                    'Content-Length': Buffer.byteLength(jobDataString),
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + ServiceAccount.accessToken()
+                },
+            };
 
-	    return tapisIO.sendRequest(requestSettings, jobDataString);
-	})
+            return tapisIO.sendRequest(requestSettings, jobDataString);
+        })
         .then(function(responseObject) {
             deferred.resolve(responseObject.result);
         })

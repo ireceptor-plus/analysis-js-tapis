@@ -25,6 +25,8 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
+var config = require('../config/config');
+
 // Models
 var ApiResponse = require('../models/apiResponse');
 
@@ -56,5 +58,9 @@ ApiResponseController.sendError = function(errorMessage, errorCode, response) {
 };
 
 ApiResponseController.confirmUpStatus = function(request, response) {
+    ApiResponseController.sendSuccess('', response);
+};
+
+ApiResponseController.getServiceInfo = function(request, response) {
     ApiResponseController.sendSuccess('', response);
 };

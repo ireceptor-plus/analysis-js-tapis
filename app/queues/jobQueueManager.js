@@ -26,6 +26,7 @@
 //
 
 // App
+var app = require('../app');
 var tapisSettings = require('../config/tapisSettings');
 
 // Models
@@ -38,9 +39,9 @@ var tapisIO = require('../vendor/tapisIO');
 var jsonApprover = require('json-approver');
 var Q = require('q');
 var kue = require('kue');
-//var taskQueue = kue.createQueue({
-//    redis: app.redisConfig,
-//});
+var taskQueue = kue.createQueue({
+    redis: app.redisConfig,
+});
 
 var JobQueueManager = {};
 module.exports = JobQueueManager;

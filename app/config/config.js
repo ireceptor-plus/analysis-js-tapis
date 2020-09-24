@@ -26,8 +26,11 @@
 //
 
 var config = {};
-
 module.exports = config;
+
+var path = require('path');
+var fs = require('fs');
+var yaml = require('js-yaml');
 
 // General
 config.port = process.env.VDJ_API_PORT;
@@ -37,3 +40,22 @@ config.debug = process.env.DEBUG_CONSOLE;
 if (config.debug == 'true') config.debug = true;
 else if (config.debug == 1) config.debug = true;
 else config.debug = false;
+
+// get service info
+var infoFile = path.resolve(__dirname, '../../package.json');
+var infoString = fs.readFileSync(infoFile, 'utf8');
+var info = JSON.parse(infoString);
+config.info = {};
+config.info.title = info.name;
+config.info.description = info.description;
+config.info.version = info.version;
+config.info.contact = {};
+config.info.contact.name = info.author;
+config.info.contact.url = info.homepage;
+config.info.license = {};
+config.info.license.name = info.license;
+
+// get api info
+var apiFile = fs.readFileSync(path.resolve(__dirname, '../../specifications/analysis-api.yaml'), 'utf8');
+var apiSpec = yaml.safeLoad(apiFile);
+config.info.api = apiSpec['info'];

@@ -53,3 +53,8 @@ AnalysisController.DefineClones = function(request, response) {
 
     apiResponseController.sendSuccess('', response);
 };
+
+AnalysisController.GeneUsage = function(request, response) {
+
+    apiResponseController.sendError('Not implemented', 500, response);
+};

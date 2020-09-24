@@ -16,12 +16,13 @@ RUN DEBIAN_FRONTEND='noninteractive' apt-get install -y \
     xz-utils
 
 # node
-RUN wget https://nodejs.org/dist/v8.10.0/node-v8.10.0-linux-x64.tar.xz
-RUN tar xf node-v8.10.0-linux-x64.tar.xz
-RUN cp -rf /node-v8.10.0-linux-x64/bin/* /usr/bin
-RUN cp -rf /node-v8.10.0-linux-x64/lib/* /usr/lib
-RUN cp -rf /node-v8.10.0-linux-x64/include/* /usr/include
-RUN cp -rf /node-v8.10.0-linux-x64/share/* /usr/share
+ENV NODE_VER v12.18.3
+RUN wget https://nodejs.org/dist/$NODE_VER/node-$NODE_VER-linux-x64.tar.xz
+RUN tar xf node-$NODE_VER-linux-x64.tar.xz
+RUN cp -rf /node-$NODE_VER-linux-x64/bin/* /usr/bin
+RUN cp -rf /node-$NODE_VER-linux-x64/lib/* /usr/lib
+RUN cp -rf /node-$NODE_VER-linux-x64/include/* /usr/include
+RUN cp -rf /node-$NODE_VER-linux-x64/share/* /usr/share
 
 # DISABLE: postfix until we need email capabilities
 # Setup postfix
@@ -53,5 +54,8 @@ RUN cd /analysis-js-tapis && npm install
 
 # Copy project source
 COPY . /analysis-js-tapis
+
+# ESLint
+RUN cd /analysis-js-tapis && npm run eslint app
 
 CMD ["/root/start-service.sh"]
