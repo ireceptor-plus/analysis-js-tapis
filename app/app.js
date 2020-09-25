@@ -5,6 +5,7 @@
 // Application entry point
 //
 // iReceptor Plus
+// Analysis API
 // http://ireceptor-plus.com
 //
 // Copyright (C) 2020 The University of Texas Southwestern Medical Center
@@ -45,7 +46,6 @@ var analysisController    = require('./controllers/analysisController');
 // Server Options
 var config = require('./config/config');
 app.set('port', config.port);
-app.set('sslOptions', config.sslOptions);
 
 // CORS
 var allowCrossDomain = function(request, response, next) {
@@ -95,7 +95,7 @@ ServiceAccount.getToken()
         return $RefParser.dereference(api_spec);
     })
     .then(function(api_schema) {
-        console.log(api_schema);
+        //console.log(api_schema);
 
         openapi.initialize({
             apiDoc: api_schema,
@@ -104,6 +104,13 @@ ServiceAccount.getToken()
             consumesMiddleware: {
                 'application/json': bodyParser.json(),
                 'application/x-www-form-urlencoded': bodyParser.urlencoded({extended: true})
+            },
+            errorMiddleware: function(err, req, res, next) {
+                console.log('Got an error!');
+                console.log(JSON.stringify(err));
+                //console.trace("Here I am!");
+                apiResponseController.sendError(err.errors, err.status, res);
+                //res.status(err.status).json(err.errors);
             },
             operations: {
                 // service status and info

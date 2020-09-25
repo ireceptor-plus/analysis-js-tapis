@@ -5,6 +5,7 @@
 // Process analysis requests
 //
 // iReceptor Plus
+// Analysis API
 // http://ireceptor-plus.com
 //
 // Copyright (C) 2020 The University of Texas Southwestern Medical Center
@@ -25,17 +26,23 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
+
+var config = require('../config/config');
+
 // Controllers
 var apiResponseController = require('./apiResponseController');
 
 // Models
 var ServiceAccount = require('../models/serviceAccount');
+var Job = require('../models/job');
 
 // Processing
 var tapisIO = require('../vendor/tapisIO');
 
+// Analysis mapping
+var mapping = require('../config/mapping');
+
 // Node Libraries
-var Q = require('q');
 var kue = require('kue');
 //var taskQueue = kue.createQueue({
 //    redis: app.redisConfig,
@@ -55,6 +62,59 @@ AnalysisController.DefineClones = function(request, response) {
 };
 
 AnalysisController.GeneUsage = function(request, response) {
+    if (config.debug) console.log('IRPLUS-ANALYSIS-API INFO: AnalysisController.GeneUsage');
+    console.log(request.body);
 
-    apiResponseController.sendError('Not implemented', 500, response);
+    var analysis = "gene_usage";
+    var analysisMetadata = null;
+    var job = new Job();
+
+    // Create a metadata record for the job info
+    var value = {
+        analysis: analysis,
+        request: request.body
+    };
+    tapisIO.createMetadataForType(null, 'irplus_analysis', value)
+        .then(function(obj) {
+            analysisMetadata = obj;
+            console.log(obj);
+
+            // Create an archive path to hold job output
+            job['archiveSystem'] = 'data.vdjserver.org';
+            job['archivePath'] = '/irplus/data/analysis/' + analysisMetadata.uuid;
+            job['archive'] = true;
+            console.log(job);
+            
+            return tapisIO.createDirectory(job['archiveSystem'], '/irplus/data/analysis', analysisMetadata.uuid);
+        })
+        .then(function() {
+            // Create job definition
+            var result = job.defineForAnalysis(analysis, request.body);
+            if (!result) return Promise.reject(new Error('Unable to create job definition.'));
+            
+            // set the execution level
+            result = job.defineExecutionLevel(analysis, request.body);
+            if (!result) return Promise.reject(new Error('Unable to define execution level for job.'));
+            
+            // Submit job
+            console.log(job);
+            return tapisIO.launchJob(job);
+        })
+        .then(function(jobData) {
+            console.log(jobData);
+            
+            // save job info into metadata
+            analysisMetadata['value']['job_id'] = jobData['id'];
+            
+            return tapisIO.updateMetadata(analysisMetadata['uuid'], analysisMetadata['name'], analysisMetadata['value'], analysisMetadata['associationIds']);
+        })
+        .then(function() {
+            // TODO: permissions for users?
+
+            response.status(200).json({analysis_id: analysisMetadata.uuid});
+        })
+        .catch(function(errorObject) {
+            console.error(errorObject);
+            apiResponseController.sendError(errorObject, 500, response);
+        });
 };

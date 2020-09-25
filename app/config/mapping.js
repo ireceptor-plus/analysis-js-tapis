@@ -1,10 +1,11 @@
 'use strict';
 
 //
-// config.js
-// Application configuration settings
+// mapping.js
+// Analysis to Tapis App mapping
 //
 // iReceptor Plus
+// Analysis API
 // http://ireceptor-plus.com
 //
 // Copyright (C) 2020 The University of Texas Southwestern Medical Center
@@ -25,40 +26,12 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-var config = {};
-module.exports = config;
-
 var path = require('path');
 var fs = require('fs');
 var yaml = require('js-yaml');
 
-var mapping = require('./mapping');
-//console.log(mapping);
-
-// General
-config.port = process.env.ANALYSIS_API_PORT;
-
-// Error/debug reporting
-config.debug = process.env.DEBUG_CONSOLE;
-if (config.debug == 'true') config.debug = true;
-else if (config.debug == 1) config.debug = true;
-else config.debug = false;
-
-// get service info
-var infoFile = path.resolve(__dirname, '../../package.json');
+// load mapping
+var infoFile = path.resolve(__dirname, '../../specifications/analysis-mapping.json');
 var infoString = fs.readFileSync(infoFile, 'utf8');
-var info = JSON.parse(infoString);
-config.info = {};
-config.info.title = info.name;
-config.info.description = info.description;
-config.info.version = info.version;
-config.info.contact = {};
-config.info.contact.name = info.author;
-config.info.contact.url = info.homepage;
-config.info.license = {};
-config.info.license.name = info.license;
-
-// get api info
-var apiFile = fs.readFileSync(path.resolve(__dirname, '../../specifications/analysis-api.yaml'), 'utf8');
-var apiSpec = yaml.safeLoad(apiFile);
-config.info.api = apiSpec['info'];
+var mapping = JSON.parse(infoString);
+module.exports = mapping;

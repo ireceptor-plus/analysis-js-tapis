@@ -58,9 +58,21 @@ ApiResponseController.sendError = function(errorMessage, errorCode, response) {
 };
 
 ApiResponseController.confirmUpStatus = function(request, response) {
-    ApiResponseController.sendSuccess('', response);
+    // Verify we can login with service account
+    var ServiceAccount = require('../models/serviceAccount');
+    ServiceAccount.getToken()
+        .then(function() {
+            ApiResponseController.sendSuccess('', response);
+        })
+        .catch(function(error) {
+            var msg = 'IRPLUS-ANALYSIS-API ERROR: Could not acquire service token.\n.' + error;
+            ApiResponseController.sendError('Internal service error.', 500, response);
+            console.error(msg);
+            //webhookIO.postToSlack(msg);
+        });
 };
 
 ApiResponseController.getServiceInfo = function(request, response) {
-    ApiResponseController.sendSuccess('', response);
+    // Respond with service info
+    response.json(config.info);
 };

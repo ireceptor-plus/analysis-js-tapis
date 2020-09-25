@@ -33,7 +33,6 @@ var ServiceAccount = require('../models/serviceAccount');
 //var MetadataPermissions = require('../models/metadataPermissions');
 
 // Node Libraries
-var Q = require('q');
 var _ = require('underscore');
 var jsonApprover = require('json-approver');
 var FormData = require('form-data');
@@ -46,263 +45,102 @@ module.exports = tapisIO;
 //
 tapisIO.sendRequest = function(requestSettings, postData) {
 
-    var deferred = Q.defer();
+    return new Promise(function(resolve, reject) {
+        var request = require('https').request(requestSettings, function(response) {
 
-    var request = require('https').request(requestSettings, function(response) {
+            var output = '';
 
-        var output = '';
+            response.on('data', function(chunk) {
+                output += chunk;
+            });
 
-        response.on('data', function(chunk) {
-            output += chunk;
-        });
+            response.on('end', function() {
 
-        response.on('end', function() {
+                var responseObject;
 
-            var responseObject;
-
-            if (output && jsonApprover.isJSON(output)) {
-                responseObject = JSON.parse(output);
-            }
-            else {
-
-                if (tapisSettings.debugConsole === true) {
-                    console.error('IRPLUS-API ERROR: Tapis response is not json.');
+                if (output && jsonApprover.isJSON(output)) {
+                    responseObject = JSON.parse(output);
+                }
+                else {
+                    reject(new Error('Response is not json. Raw output: ' + output));
                 }
 
-                deferred.reject(new Error('Tapis response is not json'));
-            }
-
-            if (responseObject && responseObject.status && responseObject.status.toLowerCase() === 'success') {
-                deferred.resolve(responseObject);
-            }
-            else {
-
-                if (tapisSettings.debugConsole === true) {
-                    console.error('IRPLUS-API ERROR: Tapis returned an error. it is: ' + JSON.stringify(responseObject));
-                    console.error('IRPLUS-API ERROR: Tapis returned an error. it is: ' + responseObject);
+                if (responseObject && responseObject.status && responseObject.status.toLowerCase() === 'success') {
+                    resolve(responseObject);
+                }
+                else {
+                    reject(new Error('Response returned an error: ' + JSON.stringify(responseObject)));
                 }
 
-                deferred.reject(new Error('Tapis response returned an error: ' + JSON.stringify(responseObject)));
-            }
-
+            });
         });
-    });
 
-    request.on('error', function(error) {
-        if (tapisSettings.debugConsole === true) {
-            console.error('IRPLUS-API ERROR: Tapis connection error.' + JSON.stringify(error));
+        request.on('error', function(error) {
+            reject(new Error('Connection error'));
+        });
+
+        if (postData) {
+            // Request body parameters
+            request.write(postData);
         }
 
-        deferred.reject(new Error('Tapis connection error'));
+        request.end();
     });
-
-    if (postData) {
-        // Request body parameters
-        request.write(postData);
-    }
-
-    request.end();
-
-    return deferred.promise;
 };
 
 //
-// This is specific to sending multi-part form post data, i.e. uploading files
+// token request
 //
-tapisIO.sendFormRequest = function(requestSettings, formData) {
-
-    var deferred = Q.defer();
-
-    var request = formData.submit(requestSettings, function(error, response) {
-
-        var output = '';
-
-        response.on('data', function(chunk) {
-            output += chunk;
-        });
-
-        response.on('end', function() {
-
-            var responseObject;
-
-            if (output && jsonApprover.isJSON(output)) {
-                responseObject = JSON.parse(output);
-            }
-            else {
-
-                if (tapisSettings.debugConsole === true) {
-                    console.error('IRPLUS-API ERROR: Tapis response is not json.');
-                }
-
-                deferred.reject(new Error('Tapis response is not json'));
-            }
-
-            if (responseObject && responseObject.status && responseObject.status.toLowerCase() === 'success') {
-                deferred.resolve(responseObject);
-            }
-            else {
-
-                if (tapisSettings.debugConsole === true) {
-                    console.error('IRPLUS-API ERROR: Tapis returned an error. it is: ' + JSON.stringify(responseObject));
-                    console.error('IRPLUS-API ERROR: Tapis returned an error. it is: ' + responseObject);
-                }
-
-                deferred.reject(new Error('Tapis response returned an error: ' + JSON.stringify(responseObject)));
-            }
-
-        });
-    });
-
-    request.on('error', function(error) {
-        if (tapisSettings.debugConsole === true) {
-            console.error('IRPLUS-API ERROR: Tapis connection error.' + JSON.stringify(error));
-        }
-
-        deferred.reject(new Error('Tapis connection error. ' + JSON.stringify(error)));
-    });
-
-    return deferred.promise;
-};
-
 tapisIO.sendTokenRequest = function(requestSettings, postData) {
 
-    var deferred = Q.defer();
+    return new Promise(function(resolve, reject) {
+        var request = require('https').request(requestSettings, function(response) {
 
-    var request = require('https').request(requestSettings, function(response) {
+            var output = '';
 
-        var output = '';
+            response.on('data', function(chunk) {
+                output += chunk;
+            });
 
-        response.on('data', function(chunk) {
-            output += chunk;
-        });
+            response.on('end', function() {
 
-        response.on('end', function() {
+                var responseObject;
 
-            var responseObject;
-
-            if (output && jsonApprover.isJSON(output)) {
-                responseObject = JSON.parse(output);
-            }
-            else {
-
-                if (tapisSettings.debugConsole === true) {
-                    console.error('IRPLUS-API ERROR: Tapis token response is not json.');
-                }
-
-                deferred.reject(new Error('Tapis response is not json'));
-            }
-
-            if (
-                responseObject
-                && responseObject.access_token
-                && responseObject.refresh_token
-                && responseObject.token_type
-                && responseObject.expires_in
-            ) {
-                deferred.resolve(responseObject);
-            }
-            else {
-
-                if (tapisSettings.debugConsole === true) {
-                    console.error('IRPLUS-API ERROR: Tapis returned a token error. it is: ' + JSON.stringify(responseObject));
-                    console.error('IRPLUS-API ERROR: Tapis returned a token error. it is: ' + responseObject);
-                }
-
-                deferred.reject(new Error('Tapis response returned an error: ' + JSON.stringify(responseObject)));
-            }
-
-        });
-    });
-
-    request.on('error', function() {
-
-        if (tapisSettings.debugConsole === true) {
-            console.error('IRPLUS-API ERROR: Tapis token connection error.');
-        }
-
-        deferred.reject(new Error('Tapis connection error'));
-    });
-
-    if (postData) {
-        // Request body parameters
-        request.write(postData);
-    }
-
-    request.end();
-
-    return deferred.promise;
-};
-
-//
-// For checking existence of files/folders
-// does not reject promise with a 404 error
-//
-tapisIO.sendCheckRequest = function(requestSettings, postData) {
-
-    var deferred = Q.defer();
-
-    var request = require('https').request(requestSettings, function(response) {
-
-        var output = '';
-
-        response.on('data', function(chunk) {
-            output += chunk;
-        });
-
-        response.on('end', function() {
-
-            var responseObject;
-
-            if (output && jsonApprover.isJSON(output)) {
-                responseObject = JSON.parse(output);
-            } else {
-
-                if (tapisSettings.debugConsole === true) {
-                    console.error('IRPLUS-API ERROR: Tapis response is not json.');
-                }
-
-                deferred.reject(new Error('Tapis response is not json'));
-            }
-
-            if (responseObject && responseObject.status && responseObject.status.toLowerCase() === 'success') {
-                deferred.resolve(responseObject);
-            } else {
-                if (responseObject.status.toLowerCase() === 'error' && response.statusCode == 404) {
-                    deferred.resolve(responseObject);
+                if (output && jsonApprover.isJSON(output)) {
+                    responseObject = JSON.parse(output);
                 } else {
-                    if (tapisSettings.debugConsole === true) {
-                        console.error('IRPLUS-API ERROR: Tapis returned an error. it is: ' + JSON.stringify(responseObject));
-                        console.error('IRPLUS-API ERROR: Tapis returned an error. it is: ' + responseObject);
-                    }
-                    deferred.reject(new Error('Tapis response returned an error: ' + JSON.stringify(responseObject)));
+                    reject(new Error('Response is not json'));
                 }
-            }       
-        });
-    });
 
-    request.on('error', function(error) {
-        if (tapisSettings.debugConsole === true) {
-            console.error('IRPLUS-API ERROR: Tapis connection error.' + JSON.stringify(error));
+                if (responseObject
+                    && responseObject.access_token
+                    && responseObject.refresh_token
+                    && responseObject.token_type
+                    && responseObject.expires_in)
+                {
+                    resolve(responseObject);
+                } else {
+                    reject(new Error('Response returned an error: ' + JSON.stringify(responseObject)));
+                }
+            });
+        });
+
+        request.on('error', function() {
+            reject(new Error('Connection error'));
+        });
+
+        if (postData) {
+            // Request body parameters
+            request.write(postData);
         }
 
-        deferred.reject(new Error('Tapis connection error'));
+        request.end();
     });
-
-    if (postData) {
-        // Request body parameters
-        request.write(postData);
-    }
-
-    request.end();
-
-    return deferred.promise;
 };
 
 // Fetches a user token based on the supplied auth object
 // and returns the auth object with token data on success
 tapisIO.getToken = function(auth) {
-
-    var deferred = Q.defer();
 
     var postData = 'grant_type=password&scope=PRODUCTION&username=' + auth.username + '&password=' + auth.password;
 
@@ -318,22 +156,11 @@ tapisIO.getToken = function(auth) {
         }
     };
 
-    tapisIO.sendTokenRequest(requestSettings, postData)
-        .then(function(responseObject) {
-            deferred.resolve(responseObject);
-        })
-        .fail(function(errorObject) {
-            deferred.reject(errorObject);
-        });
-
-    return deferred.promise;
+    return tapisIO.sendTokenRequest(requestSettings, postData);
 };
 
 // Refreshes a token and returns it on success
 tapisIO.refreshToken = function(auth) {
-
-    var deferred = Q.defer();
-
     var postData = 'grant_type=refresh_token&scope=PRODUCTION&refresh_token=' + auth.refresh_token;
 
     var requestSettings = {
@@ -348,23 +175,176 @@ tapisIO.refreshToken = function(auth) {
         }
     };
 
-    tapisIO.sendTokenRequest(requestSettings, postData)
-        .then(function(responseObject) {
-            deferred.resolve(responseObject);
-        })
-        .fail(function(errorObject) {
-            deferred.reject(errorObject);
-        });
-
-    return deferred.promise;
+    return tapisIO.sendTokenRequest(requestSettings, postData);
 };
+
+//
+// Metadata operations
+//
+
+// generic metadata query
+tapisIO.getMetadataForType = function(analysisUuid, type) {
+
+    var models = [];
+
+    var doFetch = function(accessToken, offset) {
+        var requestSettings = {
+            host:     tapisSettings.hostname,
+            method:   'GET',
+            path:   '/meta/v2/data?q='
+                + encodeURIComponent('{'
+                                     + '"name": "' + type + '",'
+                                     + '"associationIds": "' + analysisUuid + '"'
+                                     + '}')
+                + '&limit=50&offset=' + offset,
+            rejectUnauthorized: false,
+            headers: {
+                'Authorization': 'Bearer ' + accessToken
+            }
+        };
+
+        return tapisIO.sendRequest(requestSettings, null)
+            .then(function(responseObject) {
+                var result = responseObject.result;
+                if (result.length > 0) {
+                    // maybe more data
+                    models = models.concat(result);
+                    var newOffset = offset + result.length;
+                    return doFetch(accessToken, newOffset);
+                } else {
+                    // no more data
+                    return Promise.resolve(models);
+                }
+            })
+            .catch(function(errorObject) {
+                return Promise.reject(errorObject);
+            });
+    }
+
+    return ServiceAccount.getToken()
+        .then(function() {
+            return doFetch(ServiceAccount.accessToken(), 0);
+        })
+        .then(function(responseObject) {
+            return Promise.resolve(responseObject);
+        })
+        .catch(function(errorObject) {
+            return Promise.reject(errorObject);
+        });
+};
+
+// generic metadata creation
+tapisIO.createMetadataForType = function(analysisUuid, type, value) {
+
+    var postData = {
+        name: type,
+        value: value,
+    };
+    if (analysisUuid) postData['associationIds'] = [ analysisUuid ];
+
+    postData = JSON.stringify(postData);
+
+    return ServiceAccount.getToken()
+        .then(function(token) {
+            var requestSettings = {
+                host:     tapisSettings.hostname,
+                method:   'POST',
+                path:     '/meta/v2/data',
+                rejectUnauthorized: false,
+                headers: {
+                    'Content-Type':   'application/json',
+                    'Content-Length': Buffer.byteLength(postData),
+                    'Authorization': 'Bearer ' + ServiceAccount.accessToken()
+                }
+            };
+
+            return tapisIO.sendRequest(requestSettings, postData);
+        })
+        .then(function(responseObject) {
+            return Promise.resolve(responseObject.result);
+        })
+        .catch(function(errorObject) {
+            return Promise.reject(errorObject);
+        });
+};
+
+tapisIO.updateMetadata = function(uuid, name, value, associationIds) {
+
+    var postData = {
+        name: name,
+        value: value
+    };
+    if (associationIds) postData.associationIds = associationIds;
+
+    postData = JSON.stringify(postData);
+
+    return ServiceAccount.getToken()
+        .then(function(token) {
+            var requestSettings = {
+                host:     tapisSettings.hostname,
+                method:   'POST',
+                path:     '/meta/v2/data/' + uuid,
+                rejectUnauthorized: false,
+                headers: {
+                    'Content-Type':   'application/json',
+                    'Content-Length': Buffer.byteLength(postData),
+                    'Authorization': 'Bearer ' + ServiceAccount.accessToken()
+                }
+            };
+            return tapisIO.sendRequest(requestSettings, postData);
+        })
+        .then(function(responseObject) {
+            return Promise.resolve(responseObject.result);
+        })
+        .catch(function(errorObject) {
+            return Promise.reject(errorObject);
+        });
+};
+
+//
+// File operations
+//
+
+tapisIO.createDirectory = function(system, path, directory) {
+
+    var postData = 'action=mkdir&path=' + directory;
+
+    return ServiceAccount.getToken()
+        .then(function(token) {
+            var requestSettings = {
+                host:     tapisSettings.hostname,
+                method:   'PUT',
+                path:     '/files/v2/media/system/' + system + '/' + path,
+                rejectUnauthorized: false,
+                headers: {
+                    'Content-Length': Buffer.byteLength(postData),
+                    'Authorization': 'Bearer ' + ServiceAccount.accessToken()
+                },
+            };
+            console.log(requestSettings);
+
+            return tapisIO.sendRequest(requestSettings, postData);
+        })
+        .then(function(responseObject) {
+            return Promise.resolve(responseObject.result);
+        })
+        .catch(function(errorObject) {
+            return Promise.reject(errorObject);
+        });
+};
+
+//
+// Job operations
+//
+
 
 // submit Tapis job
 tapisIO.launchJob = function(jobDataString) {
 
-    var deferred = Q.defer();
+    var postData = JSON.stringify(jobDataString);
+    console.log(postData);
 
-    ServiceAccount.getToken()
+    return ServiceAccount.getToken()
         .then(function(token) {
             var requestSettings = {
                 host:     tapisSettings.hostname,
@@ -373,20 +353,18 @@ tapisIO.launchJob = function(jobDataString) {
                 ,
                 rejectUnauthorized: false,
                 headers: {
-                    'Content-Length': Buffer.byteLength(jobDataString),
+                    'Content-Length': Buffer.byteLength(postData),
                     'Content-Type': 'application/json',
                     'Authorization': 'Bearer ' + ServiceAccount.accessToken()
                 },
             };
 
-            return tapisIO.sendRequest(requestSettings, jobDataString);
+            return tapisIO.sendRequest(requestSettings, postData);
         })
         .then(function(responseObject) {
-            deferred.resolve(responseObject.result);
+            return Promise.resolve(responseObject.result);
         })
-        .fail(function(errorObject) {
-            deferred.reject(errorObject);
+        .catch(function(errorObject) {
+            return Promise.reject(errorObject);
         });
-
-    return deferred.promise;
 };

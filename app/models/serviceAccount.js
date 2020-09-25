@@ -26,8 +26,6 @@
 //
 
 // Node Libraries
-var Q = require('q');
-
 var tapisSettings = require('../config/tapisSettings');
 var TapisToken = require('./tapisToken');
 
@@ -44,20 +42,17 @@ var tapisIO = require('../vendor/tapisIO');
 
 ServiceAccount.getToken = function() {
 
-    var deferred = Q.defer();
     var that = this;
 
-    tapisIO.getToken(this)
+    return tapisIO.getToken(this)
         .then(function(responseObject) {
             that.tapisToken = new TapisToken(responseObject);
-            deferred.resolve(that.tapisToken);
+            return Promise.resolve(that.tapisToken);
         })
-        .fail(function(errorObject) {
+        .catch(function(errorObject) {
             console.log('IRPLUS-API ERROR: Unable to login with service account. ' + errorObject);
-            deferred.reject(errorObject);
+            return Promise.reject(errorObject);
         });
-
-    return deferred.promise;
 }
 
 ServiceAccount.accessToken = function() {
