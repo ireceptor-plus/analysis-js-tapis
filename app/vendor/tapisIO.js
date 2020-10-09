@@ -179,8 +179,113 @@ tapisIO.refreshToken = function(auth) {
 };
 
 //
+// User account operations
+//
+tapisIO.getAgaveUserProfile = function(accessToken, username) {
+
+    return ServiceAccount.getToken()
+        .then(function(token) {
+            var requestSettings = {
+                host:   tapisSettings.hostname,
+                method: 'GET',
+                path:   '/profiles/v2/' + username,
+                rejectUnauthorized: false,
+                headers: {
+                    'Authorization': 'Bearer ' + accessToken
+                }
+            };
+
+            return tapisIO.sendRequest(requestSettings, null);
+        })
+        .then(function(responseObject) {
+            return Promise.resolve(responseObject.result);
+        })
+        .catch(function(errorObject) {
+            return Promise.reject(errorObject);
+        });
+};
+
+tapisIO.getUserVerificationMetadata = function(username) {
+
+    return ServiceAccount.getToken()
+        .then(function(token) {
+            var requestSettings = {
+                host:     tapisSettings.hostname,
+                method:   'GET',
+                path:     '/meta/v2/data?q='
+                    + encodeURIComponent(
+                        '{"name":"userVerification",'
+                            + ' "value.username":"' + username + '",'
+                            + ' "owner":"' + ServiceAccount.username + '"'
+                            + '}'
+                    )
+                    + '&limit=1'
+                ,
+                rejectUnauthorized: false,
+                headers: {
+                    'Authorization': 'Bearer ' + ServiceAccount.accessToken()
+                }
+            };
+
+            return tapisIO.sendRequest(requestSettings, null);
+        })
+        .then(function(responseObject) {
+            return Promise.resolve(responseObject.result);
+        })
+        .catch(function(errorObject) {
+            return Promise.reject(errorObject);
+        });
+};
+
+tapisIO.getMetadataPermissionsForUser = function(accessToken, uuid, username) {
+
+    var requestSettings = {
+        host:     tapisSettings.hostname,
+        method:   'GET',
+        path:     '/meta/v2/data/' + uuid + '/pems/' + username,
+        rejectUnauthorized: false,
+        headers: {
+            'Authorization': 'Bearer ' + accessToken
+        }
+    };
+
+    return tapisIO.sendRequest(requestSettings, null)
+        .then(function(responseObject) {
+            return Promise.resolve(responseObject.result);
+        })
+        .catch(function(errorObject) {
+            return Promise.reject(errorObject);
+        });
+};
+
+//
 // Metadata operations
 //
+
+// get single metadata record
+tapisIO.getMetadata = function(uuid) {
+
+    return ServiceAccount.getToken()
+        .then(function(token) {
+            var requestSettings = {
+                host:     tapisSettings.hostname,
+                method:   'GET',
+                path:     '/meta/v2/data/' + uuid,
+                rejectUnauthorized: false,
+                headers: {
+                    'Authorization': 'Bearer ' + ServiceAccount.accessToken()
+                }
+            };
+
+            return tapisIO.sendRequest(requestSettings, null);
+        })
+        .then(function(responseObject) {
+            return Promise.resolve(responseObject.result);
+        })
+        .catch(function(errorObject) {
+            return Promise.reject(errorObject);
+        });
+};
 
 // generic metadata query
 tapisIO.getMetadataForType = function(analysisUuid, type) {
@@ -360,6 +465,31 @@ tapisIO.launchJob = function(jobDataString) {
             };
 
             return tapisIO.sendRequest(requestSettings, postData);
+        })
+        .then(function(responseObject) {
+            return Promise.resolve(responseObject.result);
+        })
+        .catch(function(errorObject) {
+            return Promise.reject(errorObject);
+        });
+};
+
+// Tapis job info
+tapisIO.getJobInfo = function(jobId) {
+
+    return ServiceAccount.getToken()
+        .then(function(token) {
+            var requestSettings = {
+                host:     tapisSettings.hostname,
+                method:   'GET',
+                path:     '/jobs/v2/' + jobId,
+                rejectUnauthorized: false,
+                headers: {
+                    'Authorization': 'Bearer ' + ServiceAccount.accessToken()
+                }
+            };
+
+            return tapisIO.sendRequest(requestSettings, null);
         })
         .then(function(responseObject) {
             return Promise.resolve(responseObject.result);

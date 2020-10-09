@@ -42,6 +42,7 @@ var app = module.exports = express();
 // Controllers
 var apiResponseController = require('./controllers/apiResponseController');
 var analysisController    = require('./controllers/analysisController');
+var authController = require('./controllers/authController');
 
 // Server Options
 var config = require('./config/config');
@@ -111,6 +112,9 @@ ServiceAccount.getToken()
                 //console.trace("Here I am!");
                 apiResponseController.sendError(err.errors, err.status, res);
                 //res.status(err.status).json(err.errors);
+            },
+            securityHandlers: {
+                user_authorization: authController.userAuthorization
             },
             operations: {
                 // service status and info

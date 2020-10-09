@@ -53,7 +53,27 @@ module.exports = AnalysisController;
 
 AnalysisController.getAnalysisStatus = function(request, response) {
 
-    apiResponseController.sendSuccess('', response);
+    var analysis_id = request.params.analysis_id;
+
+    var analysis_info = null
+    tapisIO.getMetadata(analysis_id)
+        .then(function(obj) {
+            analysis_info = obj['value'];
+            analysis_info['analysis_id'] = obj['uuid'];
+            var job_id = analysis_info['job_id'];
+
+            return tapisIO.getJobInfo(job_id);
+        })
+        .then(function(job_info) {
+            analysis_info['job_info'] = job_info;
+            analysis_info['status'] = job_info['status'];
+
+            response.status(200).json(analysis_info);
+        })
+        .catch(function(errorObject) {
+            console.error(errorObject);
+            apiResponseController.sendError(errorObject, 500, response);
+        });
 };
 
 AnalysisController.DefineClones = function(request, response) {
